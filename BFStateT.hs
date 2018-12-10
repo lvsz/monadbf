@@ -10,7 +10,7 @@ import Data.ByteString.Internal ( c2w, w2c )
 import Data.Word                ( Word8 )
 import System.IO                ( isEOF )
 
-import BFPtr
+import BFPtr.ExplicitDictionary
 import MonadBF
 
 type BFMem = (IOUArray BFPtr Word8, BFPtr)
@@ -21,8 +21,8 @@ newtype BFState a = BFState (StateT BFMem IO a)
 instance MonadBF BFState where
     incByte n = get >>= (\m -> readBFMem m >>= writeBFMem m . (+) n)
     decByte n = get >>= (\m -> readBFMem m >>= writeBFMem m . subtract n)
-    incPtr n = second (+ n) <$> get >>= put
-    decPtr n = second (subtract n) <$> get >>= put
+    incPtr n = second (*+ n) <$> get >>= put
+    decPtr n = second (ptrSubtract n) <$> get >>= put
     showByte = getByte >>= liftIO . putChar . w2c
     readByte = liftIO (isEOF >>= bool getChar (return '\0')) >>= \c ->
         get >>= \m -> writeBFMem m (c2w c)
@@ -37,6 +37,6 @@ writeBFMem = (liftIO .) . uncurry writeArray
 runBFState :: String -> IO ()
 runBFState prog = bfMem >>= evalBFState (parseBF prog)
   where
-    bfMem = flip (,) 0 <$> newArray bfBounds 0
+    bfMem = flip (,) 0 <$> newArray ptrBounds 0
     evalBFState (BFState bf) = evalStateT bf
 

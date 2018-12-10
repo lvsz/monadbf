@@ -4,7 +4,7 @@ import System.Environment ( getArgs )
 import System.IO          ( readFile )
 
 import BFPure
-import BFState
+import BFStateT
 import BFReaderT
 import BFDict
 
@@ -14,7 +14,7 @@ main = do
     prog <- readFile file
     runBFState prog
     case mode of
-        "State" -> runBFState prog
+        "StateT" -> runBFState prog
         "ReaderT" -> runBFReaderT prog
         "Dict" -> runBFDict prog
         "Pure" -> do

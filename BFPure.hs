@@ -9,7 +9,7 @@ import Data.ByteString.Lazy    ( ByteString )
 import Data.Monoid             ( (<>), mempty )
 import Data.Word               ( Word8 )
 
-import BFPtr
+import BFPtr.ExplicitDictionary
 import MonadBF
 
 data BFPureState = BFPureState { bfArray :: UArray BFPtr Word8
@@ -27,9 +27,9 @@ instance MonadBF BFPure where
     decByte n = get >>= \s@(BFPureState a i _ _) ->
         put $ s { bfArray = accum (-) a [(i, n)] }
     incPtr n = get >>= \s ->
-        put $ s { bfPtr = bfPtr s + n }
+        put $ s { bfPtr = bfPtr s *+ n }
     decPtr n = get >>= \s ->
-        put $ s { bfPtr = bfPtr s - n }
+        put $ s { bfPtr = bfPtr s *- n }
     showByte = get >>= \s@(BFPureState a i _ o) ->
         put $ s { output = o <> word8 (a ! i) }
     readByte = get >>= \s@(BFPureState a i inp _) -> put $ case inp of
@@ -40,6 +40,6 @@ instance MonadBF BFPure where
 runBFPure :: [Word8] -> String -> ByteString
 runBFPure inp prog = execBFPure (parseBF prog) $! BFPureState arr 0 inp mempty
   where
-    !arr = listArray bfBounds $ repeat 0
+    !arr = listArray ptrBounds $ repeat 0
     execBFPure (BFPure bf) s = toLazyByteString . output $! execState bf s
 

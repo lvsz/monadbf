@@ -5,7 +5,7 @@ import Control.Arrow       ( first )
 import Control.Monad.Loops ( whileM_ )
 import Data.Word           ( Word8 )
 
-import BFPtr
+import BFPtr.ExplicitDictionary
 
 class Monad m => MonadBF m where
     incByte :: Word8 -> m ()
@@ -31,7 +31,7 @@ parseBF !(x:xs) = case x of
     _   -> parseBF rest
   where
     !(n, rest) = first (succ . length) $! span (== x) xs
-    !ptr = BFPtr n
+    !ptr = fromIntegral n
     !n8 = fromIntegral n
 
 extractLoop :: String -> (String, String)

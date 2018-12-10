@@ -11,7 +11,7 @@ import Data.IORef               ( IORef, newIORef, readIORef, modifyIORef' )
 import Data.Word                ( Word8 )
 import System.IO                ( isEOF )
 
-import BFPtr
+import BFPtr.ExplicitDictionary
 import MonadBF
 
 type BFMem = (IOUArray BFPtr Word8, IORef BFPtr)
@@ -32,10 +32,10 @@ instance MonadBF BFReaderT where
         liftIO $ unsafeWrite arr ptr (byte - n)
     incPtr n = do
         !ref <- asks snd
-        liftIO $ modifyIORef' ref (+ n)
+        liftIO $ modifyIORef' ref (*+ n)
     decPtr n = do
         !ref <- asks snd
-        liftIO $ modifyIORef' ref (subtract n)
+        liftIO $ modifyIORef' ref (ptrSubtract n)
     showByte = do
         !(arr,ref) <- ask
         !ptr <- liftIO $ fromIntegral <$> readIORef ref
@@ -54,6 +54,6 @@ instance MonadBF BFReaderT where
 runBFReaderT :: String -> IO ()
 runBFReaderT s = env >>= runBFReaderT' (parseBF s)
   where
-    env = (,) <$> newArray bfBounds 0 <*> newIORef 0
+    env = (,) <$> newArray ptrBounds 0 <*> newIORef 0
     runBFReaderT' (BFReaderT bf) = runReaderT bf
 
