@@ -13,7 +13,7 @@ main = do
     (file:_) <- getArgs
     !prog <- readFile file
     defaultMain . return $
-        bgroup "bf" [ bench "StateT" $ whnfIO (runBFState prog)
+        bgroup "bf" [ bench "State" $ whnfIO (runBFState prog)
                     , bench "ReaderT" $ whnfIO (runBFReaderT prog)
                     , bench "Dict" $ whnfIO (runBFDict prog)
                     , bench "Pure" $ whnf (runBFPure []) prog
