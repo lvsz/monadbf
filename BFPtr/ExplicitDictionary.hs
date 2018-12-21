@@ -9,13 +9,14 @@
 --
 module BFPtr.ExplicitDictionary (
       BFPtr
+    , mkSemigroupOp
+    , ptrBounds
+    , ptrSubtract
     , (*+)
     , (*-)
-    , ptrSubtract
-    , ptrBounds
     ) where
 
-import Data.List.NonEmpty ( NonEmpty(..) )
+import Data.List.NonEmpty ( NonEmpty( (:|) ) )
 import Data.Semigroup     ( Semigroup.Dict(..), (<>) )
 
 type BFPtr = Int
@@ -29,19 +30,19 @@ ptrBounds = (0, ptrMax - 1)
 ptrSemigroupDict :: BFPtr -> (BFPtr -> BFPtr -> BFPtr) -> Semigroup.Dict Int
 ptrSemigroupDict n op = Semigroup.Dict
     (\x y -> (x `op` y) `mod` n)
-    (\(a :| as) -> foldr (\x acc -> (acc `op` x)) a as `mod` n)
+    (\(a :| as) -> foldr (\x acc -> acc `op` x) a as `mod` n)
     (\x a -> fromIntegral x * (0 `op` a) `mod` n)
 
-mkSemigroupOp :: (BFPtr -> BFPtr -> BFPtr) -> (BFPtr -> BFPtr -> BFPtr)
-mkSemigroupOp op = (<>) (( ptrSemigroupDict ptrMax op ))
+mkSemigroupOp :: BFPtr -> (BFPtr -> BFPtr -> BFPtr) -> (BFPtr -> BFPtr -> BFPtr)
+mkSemigroupOp mod op = (<>) (( ptrSemigroupDict mod op ))
 
 -- notation inspired by C pointers
 (*+) :: BFPtr -> BFPtr -> BFPtr
-(*+) = mkSemigroupOp (+)
-
-(*-) :: BFPtr -> BFPtr -> BFPtr
-(*-) = mkSemigroupOp (-)
+(*+) = mkSemigroupOp ptrMax (+)
 
 ptrSubtract :: BFPtr -> BFPtr -> BFPtr
-ptrSubtract = mkSemigroupOp subtract
+ptrSubtract = (*+) . negate
+
+(*-) :: BFPtr -> BFPtr -> BFPtr
+(*-) = flip ptrSubtract
 
