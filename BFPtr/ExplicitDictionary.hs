@@ -34,7 +34,7 @@ ptrSemigroupDict n op = Semigroup.Dict
     (\x a -> fromIntegral x * (0 `op` a) `mod` n)
 
 mkSemigroupOp :: BFPtr -> (BFPtr -> BFPtr -> BFPtr) -> (BFPtr -> BFPtr -> BFPtr)
-mkSemigroupOp mod op = (<>) (( ptrSemigroupDict mod op ))
+mkSemigroupOp n op = (<>) (( ptrSemigroupDict n op ))
 
 -- notation inspired by C pointers
 (*+) :: BFPtr -> BFPtr -> BFPtr

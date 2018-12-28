@@ -1,6 +1,5 @@
 import qualified Data.ByteString.Lazy as BS
-import Data.List             ( intersperse )
-import Control.Monad         ( forM_, join )
+import Control.Monad         ( forM_ )
 import System.Console.GetOpt
 import System.Environment    ( getArgs )
 import System.Exit           ( ExitCode(..), exitWith )
@@ -35,8 +34,10 @@ data Options = Options { optHelp       :: Bool
                        , optTapeLength :: Int
                        }
 
+defaultMode :: Mode
 defaultMode = Dict
 
+defaultTapeLength :: Int
 defaultTapeLength = 30000
 
 defaultOptions :: Options
@@ -61,20 +62,18 @@ options =
           (ReqArg (\x opts -> opts { optTapeLength = read x }) "<NUM>")
           ("Number of bytes in a tape, default is " ++ show defaultTapeLength)
     ]
-  where
-    showModes = "<" ++ (join . intersperse "|" $ map show modes) ++ ">"
 
 parseOptions :: [String] -> IO (Options, [String])
 parseOptions argv = case getOpt RequireOrder options argv of
     (opts, files, []) | optHelp opts'      -> putHelp
-                      | optListModes opts' -> listModes
+                      | optListModes opts' -> putModes
                       | otherwise          -> return (opts', files)
                       where opts' = foldl (flip ($)) defaultOptions opts
     (_, _, es) -> ioError $ userError $ concat es ++ usageInfo header options
   where
     header = "Usage: monadbf [OPTION...] [--] [files...]"
     putHelp = hPutStr stderr (usageInfo header options) >> exit
-    listModes = putStr (unlines $ "Available modes:":map show modes) >> exit
+    putModes = putStr (unlines $ "Available modes:":map show modes) >> exit
     exit = exitWith ExitSuccess
 
 main :: IO ()

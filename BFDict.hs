@@ -4,17 +4,13 @@
 {-# LANGUAGE TypeApplications #-}
 module BFDict ( runBFDict ) where
 
-import Control.Monad            ( forM_ )
-import Control.Monad.Loops      ( whileM_ )
-import Control.Monad.Trans      ( MonadIO, liftIO )
-import Control.Monad.State      ( MonadState(..), StateT, evalStateT, get, put )
 import Data.Array.Base          ( unsafeRead, unsafeWrite )
 import Data.Array.IO            ( IOUArray, newArray )
 import Data.Bool                ( bool )
 import Data.ByteString.Internal ( c2w, w2c )
 import Data.IORef               ( IORef, newIORef, modifyIORef', readIORef )
 import Data.Word                ( Word8 )
-import System.IO    --            ( isEOF )
+import System.IO                ( isEOF, hFlush, stdout )
 
 import BFPtr.ExplicitDictionary
 import MonadBF
