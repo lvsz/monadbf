@@ -3,7 +3,7 @@ module MonadBF ( MonadBF(..), parseBF ) where
 import Control.Monad.Loops ( whileM_ )
 import Data.Functor        ( ($>) )
 import Data.Word           ( Word8 )
-import Text.ParserCombinators.Parsec
+import Text.Parsec
 
 import BFPtr.ExplicitDictionary
 
@@ -16,7 +16,7 @@ class Monad m => MonadBF m where
     readByte :: m ()
     getByte  :: m Word8
 
-parseBFCommand :: MonadBF bf => Parser (bf ())
+parseBFCommand :: MonadBF bf => Parsec String () (bf ())
 parseBFCommand =  char '+' `is` incByte
               <|> char '-' `is` decByte
               <|> char '<' `is` decPtr
@@ -24,15 +24,22 @@ parseBFCommand =  char '+' `is` incByte
               <|> char ','  $>  readByte
               <|> char '.'  $>  showByte
               <|> whileM_ ((/= 0) <$> getByte) <$> loop
+              <|> anyChar `parserBind` (unexpected . show)
   where
     c `is` f = f . fromIntegral . length <$> many1 c
-    loop = between (char '[') (char ']') $ foldl1 (>>) <$> many parseBFCommand
+    loop = between (char '[') (char ']') $ foldl1 (>>) <$> cmds
+    cmds = let check [] = errorWithoutStackTrace "Error: non-terminating loop"
+               check xs = xs
+           in check <$> many parseBFCommand
 
-parseBF' :: MonadBF bf => String -> Either ParseError (bf ())
-parseBF' = parse (foldl1 (>>) <$> many parseBFCommand) "bf" . filter (`elem` "+-<>,.[]")
+isBFCommand :: Char -> Bool
+isBFCommand = flip elem "+-<>,.[]"
 
 parseBF :: MonadBF bf => String -> bf ()
-parseBF s = case parseBF' s of
-    Right bf -> bf
-    Left err -> error $ "Parsing error:\n" ++ show err
+parseBF s | null prog = return ()
+          | otherwise = either parseError id bf
+  where
+    prog = filter isBFCommand s
+    bf = parse (foldl1 (>>) <$> many parseBFCommand) "BF" prog
+    parseError err = errorWithoutStackTrace $ "Parsing error:\n" ++ show err
 
